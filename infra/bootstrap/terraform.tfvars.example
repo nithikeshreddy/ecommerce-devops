@@ -1,0 +1,3 @@
+# Replace with a globally unique name you control before any future deployment.
+bucket_name = "replace-with-your-unique-state-bucket"
+region      = "us-east-1"

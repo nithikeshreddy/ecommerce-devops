@@ -1,0 +1,17 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+# Required proxy configuration from upstream PR #1766.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opentelemetry-demo-frontendproxy
+spec:
+  template:
+    spec:
+      containers:
+        - name: frontendproxy
+          env:
+            - name: FLAGD_UI_HOST
+              value: opentelemetry-demo-flagd
+            - name: FLAGD_UI_PORT
+              value: "4000"

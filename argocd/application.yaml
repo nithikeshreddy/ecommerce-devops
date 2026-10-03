@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: Apache-2.0
+# Example only: repository and branch must be set before use.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: astronomy-shop
+  namespace: argocd
+spec:
+  project: astronomy-shop
+  source:
+    repoURL: https://github.com/REPLACE_OWNER/REPLACE_REPOSITORY.git
+    targetRevision: REPLACE_GITOPS_BRANCH
+    path: kubernetes/eks
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: otel-demo
+  # Omit automated entirely: auto-sync, automatic pruning, and self-healing are off.
+  # No deletion finalizer; deleting this example must not cascade-delete workloads.
+  syncPolicy: {}

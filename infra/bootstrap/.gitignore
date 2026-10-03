@@ -1,0 +1,17 @@
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+.terraform.tfstate.lock.info
+*.tfplan
+*.plan
+tfplan
+plan.out
+plans/
+*.tfvars
+*.tfvars.json
+!terraform.tfvars.example
+backend.hcl
+*.backend.hcl
+crash.log
+crash.*.log
+# Keep .terraform.lock.hcl in version control.

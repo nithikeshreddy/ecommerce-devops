@@ -1,0 +1,24 @@
+# Local Terraform data and state, including backups and lock metadata.
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+.terraform.tfstate.lock.info
+
+# Save any future plans with these extensions or inside plans/.
+*.tfplan
+*.plan
+tfplan
+plan.out
+plans/
+
+# Real input values stay local; keep the safe example and provider lockfile.
+*.tfvars
+*.tfvars.json
+!terraform.tfvars.example
+
+crash.log
+crash.*.log
+
+# Backend values stay local; the placeholder example remains trackable.
+backend.hcl
+*.backend.hcl

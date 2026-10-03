@@ -1,0 +1,71 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+# Scoped adaptation of upstream PR #1766; keep the existing flagd image.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opentelemetry-demo-flagd
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: init-config
+          image: busybox:1.36.1
+          command:
+            - sh
+            - -c
+            - cp /config-ro/demo.flagd.json /config-rw/demo.flagd.json && chmod 0644 /config-rw/demo.flagd.json
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+          volumeMounts:
+            - name: config-ro
+              mountPath: /config-ro
+              readOnly: true
+            - name: config-rw
+              mountPath: /config-rw
+      containers:
+        - name: flagd
+          volumeMounts:
+            - name: config-rw
+              mountPath: /etc/flagd
+        - name: flagd-ui
+          image: ghcr.io/open-telemetry/demo:1.12.0-flagdui
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4000
+              name: flagdui
+          env:
+            - name: OTEL_SERVICE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.labels['app.kubernetes.io/component']
+            - name: OTEL_COLLECTOR_NAME
+              value: opentelemetry-demo-otelcol
+            - name: OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE
+              value: cumulative
+            - name: FLAGD_METRICS_EXPORTER
+              value: otel
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://$(OTEL_COLLECTOR_NAME):4317
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: service.name=$(OTEL_SERVICE_NAME),service.namespace=opentelemetry-demo,service.version=1.12.0
+          resources:
+            limits:
+              memory: 150Mi
+          # The upstream image and init copy use root; the seed is root-owned.
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+          volumeMounts:
+            - name: config-rw
+              mountPath: /app/data
+      volumes:
+        - name: config
+          $patch: delete
+        - name: config-ro
+          configMap:
+            name: opentelemetry-demo-flagd-config
+        - name: config-rw
+          emptyDir: {}

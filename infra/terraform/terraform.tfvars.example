@@ -1,0 +1,17 @@
+# Copy to terraform.tfvars locally. Never add credentials to either file.
+region             = "us-east-1"
+project_name       = "astronomy-shop"
+kubernetes_version = "1.35"
+node_instance_type = "t3.medium"
+
+node_counts = {
+  min     = 1
+  desired = 2
+  max     = 3
+}
+
+# Safest default: API reachable only from the VPC or a connected network.
+allowed_cluster_access_cidrs = []
+# For public access, supply your own trusted egress IPv4 /32.
+# Documentation-only address; replace before use:
+# allowed_cluster_access_cidrs = ["203.0.113.10/32"]

@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: Apache-2.0
+# Example: replace the exact repository URL before registering with Argo CD.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: astronomy-shop
+  namespace: argocd
+spec:
+  description: Astronomy Shop demo in the dedicated otel-demo namespace
+  sourceRepos:
+    - https://github.com/REPLACE_OWNER/REPLACE_REPOSITORY.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: otel-demo
+  # Required by the inherited observability stack; these objects are cluster-wide.
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: Secret
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ServiceAccount
+    - group: ""
+      kind: Pod
+    - group: apps
+      kind: Deployment
+    - group: apps
+      kind: StatefulSet
+    - group: policy
+      kind: PodDisruptionBudget
+    - group: rbac.authorization.k8s.io
+      kind: Role
+    - group: rbac.authorization.k8s.io
+      kind: RoleBinding

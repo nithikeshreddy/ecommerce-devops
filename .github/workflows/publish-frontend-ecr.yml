@@ -1,0 +1,100 @@
+name: Publish frontend to ECR
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+# Serialize this publisher so simultaneous reruns cannot race on immutable tags.
+concurrency:
+  group: publish-frontend-ecr
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+      ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+      AWS_PAGER: ""
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check publishing configuration
+        run: |
+          set -euo pipefail
+          for variable in AWS_REGION AWS_ROLE_ARN ECR_REPOSITORY; do
+            if [[ -z "${!variable}" ]]; then
+              echo "::error::Missing repository variable $variable"
+              exit 1
+            fi
+          done
+          [[ "$AWS_REGION" =~ ^[a-z]{2}(-[a-z]+)+-[0-9]+$ ]] || { echo "::error::Invalid AWS_REGION"; exit 1; }
+          [[ "$AWS_ROLE_ARN" =~ ^arn:aws[a-z-]*:iam::[0-9]{12}:role/.+$ ]] || { echo "::error::Invalid AWS_ROLE_ARN"; exit 1; }
+          [[ "$ECR_REPOSITORY" =~ ^[a-z0-9]+([._/-][a-z0-9]+)*$ ]] || { echo "::error::ECR_REPOSITORY must be a repository name, not a URL"; exit 1; }
+          [[ "$GITHUB_REF" == refs/heads/* ]] || { echo "::error::Select the trusted publishing branch"; exit 1; }
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::Expected full commit SHA"; exit 1; }
+
+      - name: Check out the dispatched commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Authenticate with AWS OIDC
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          audience: sts.amazonaws.com
+          role-session-name: frontend-${{ github.run_id }}
+          role-duration-seconds: 3600
+          unset-current-credentials: true
+
+      - name: Check immutable repository and existing SHA tag
+        id: image
+        run: |
+          set -euo pipefail
+          repository=$(aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" --output json)
+          jq -e '.repositories[0] | .imageTagMutability == "IMMUTABLE" and ((.imageTagMutabilityExclusionFilters // []) | length == 0)' <<< "$repository" >/dev/null
+          repository_uri=$(jq -er '.repositories[0].repositoryUri' <<< "$repository")
+          echo "uri=$repository_uri:$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+          echo "registry=${repository_uri%%/*}" >> "$GITHUB_OUTPUT"
+
+          error_file=$(mktemp)
+          trap 'rm -f "$error_file"' EXIT
+          if digest=$(aws ecr describe-images --repository-name "$ECR_REPOSITORY" \
+            --image-ids "imageTag=$GITHUB_SHA" --query 'imageDetails[0].imageDigest' \
+            --output text 2>"$error_file"); then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Already published: $repository_uri:$GITHUB_SHA ($digest). Skipping build and push." >> "$GITHUB_STEP_SUMMARY"
+          else
+            status=$?
+            if grep -q '^An error occurred (ImageNotFoundException) when calling the DescribeImages operation:' "$error_file"; then
+              echo "exists=false" >> "$GITHUB_OUTPUT"
+            else
+              cat "$error_file" >&2
+              exit "$status"
+            fi
+          fi
+
+      - name: Log in, build, and publish frontend
+        if: steps.image.outputs.exists == 'false'
+        env:
+          REGISTRY: ${{ steps.image.outputs.registry }}
+          IMAGE_URI: ${{ steps.image.outputs.uri }}
+        run: |
+          set -euo pipefail
+          trap 'docker logout "$REGISTRY" >/dev/null 2>&1 || true' EXIT
+          aws ecr get-login-password --region "$AWS_REGION" |
+            docker login --username AWS --password-stdin "$REGISTRY"
+          # The existing Dockerfile requires root context and has no ARG directives.
+          # Match AL2023_x86_64_STANDARD in the Terraform managed node group.
+          docker build --platform linux/amd64 --file ./src/frontend/Dockerfile --tag "$IMAGE_URI" .
+          docker push "$IMAGE_URI"
+          echo "Published: $IMAGE_URI" >> "$GITHUB_STEP_SUMMARY"

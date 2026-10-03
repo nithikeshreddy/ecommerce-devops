@@ -1,0 +1,7 @@
+# Replace placeholders after the separate bootstrap root creates the bucket.
+# Do not put credentials here. Use the standard AWS credential chain.
+bucket       = "REPLACE_WITH_STATE_BUCKET_NAME"
+region       = "REPLACE_WITH_BUCKET_REGION"
+key          = "astronomy-shop/infrastructure/terraform.tfstate"
+encrypt      = true
+use_lockfile = true

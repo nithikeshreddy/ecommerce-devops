@@ -1,0 +1,65 @@
+# SPDX-License-Identifier: Apache-2.0
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: otel-demo
+resources:
+  - ../upstream
+patches:
+  - path: frontend-image.yaml
+  - path: frontendproxy-flagdui.yaml
+  - path: flagd-ui.yaml
+  - path: flagd-ui-service.yaml
+
+# Exact old tags avoid replacing other services or a frontend ECR override.
+images:
+  - name: ghcr.io/open-telemetry/demo:1.11.1-accountingservice
+    newName: ghcr.io/open-telemetry/demo
+    newTag: 1.12.0-accountingservice
+  - name: ghcr.io/open-telemetry/demo:1.11.1-adservice
+    newName: ghcr.io/open-telemetry/demo
+    newTag: 1.12.0-adservice
+  - name: ghcr.io/open-telemetry/demo:1.11.1-cartservice
+    newName: ghcr.io/open-telemetry/demo
+    newTag: 1.12.0-cartservice
+  - name: ghcr.io/open-telemetry/demo:1.11.1-checkoutservice
+    newName: ghcr.io/open-telemetry/demo
+    newTag: 1.12.0-checkoutservice
+  - name: ghcr.io/open-telemetry/demo:1.11.1-currencyservice
+    newName: ghcr.io/open-telemetry/demo
+    newTag: 1.12.0-currencyservice
+  - name: ghcr.io/open-telemetry/demo:1.11.1-emailservice
+    newName: ghcr.io/open-telemetry/demo
+    newTag: 1.12.0-emailservice
+  - name: ghcr.io/open-telemetry/demo:1.11.1-frauddetectionservice
+    newName: ghcr.io/open-telemetry/demo
+    newTag: 1.12.0-frauddetectionservice
+  - name: ghcr.io/open-telemetry/demo:1.11.1-frontend
+    newName: ghcr.io/open-telemetry/demo
+    newTag: 1.12.0-frontend
+  - name: ghcr.io/open-telemetry/demo:1.11.1-frontendproxy
+    newName: ghcr.io/open-telemetry/demo
+    newTag: 1.12.0-frontendproxy
+  - name: ghcr.io/open-telemetry/demo:1.11.1-imageprovider
+    newName: ghcr.io/open-telemetry/demo
+    newTag: 1.12.0-imageprovider
+  - name: ghcr.io/open-telemetry/demo:1.11.1-kafka
+    newName: ghcr.io/open-telemetry/demo
+    newTag: 1.12.0-kafka
+  - name: ghcr.io/open-telemetry/demo:1.11.1-loadgenerator
+    newName: ghcr.io/open-telemetry/demo
+    newTag: 1.12.0-loadgenerator
+  - name: ghcr.io/open-telemetry/demo:1.11.1-paymentservice
+    newName: ghcr.io/open-telemetry/demo
+    newTag: 1.12.0-paymentservice
+  - name: ghcr.io/open-telemetry/demo:1.11.1-productcatalogservice
+    newName: ghcr.io/open-telemetry/demo
+    newTag: 1.12.0-productcatalogservice
+  - name: ghcr.io/open-telemetry/demo:1.11.1-quoteservice
+    newName: ghcr.io/open-telemetry/demo
+    newTag: 1.12.0-quoteservice
+  - name: ghcr.io/open-telemetry/demo:1.11.1-recommendationservice
+    newName: ghcr.io/open-telemetry/demo
+    newTag: 1.12.0-recommendationservice
+  - name: ghcr.io/open-telemetry/demo:1.11.1-shippingservice
+    newName: ghcr.io/open-telemetry/demo
+    newTag: 1.12.0-shippingservice

@@ -1,0 +1,8 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+# Immutable upstream copy of ../opentelemetry-demo.yaml, verified byte-for-byte.
+# A remote resource avoids out-of-root file loading and an ancestor-base cycle.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - https://raw.githubusercontent.com/open-telemetry/opentelemetry-demo/2d4661e4897aa7b2d2ddbb5ef8c4824ca8a1b88d/kubernetes/opentelemetry-demo.yaml

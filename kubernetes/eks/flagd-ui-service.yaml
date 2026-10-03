@@ -1,0 +1,11 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+apiVersion: v1
+kind: Service
+metadata:
+  name: opentelemetry-demo-flagd
+spec:
+  ports:
+    - name: flagdui
+      port: 4000
+      targetPort: flagdui
