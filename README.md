@@ -1,50 +1,52 @@
 # E-Commerce DevOps on AWS EKS
 
-An AWS DevOps portfolio reconstruction using **OpenTelemetry Astronomy Shop
-1.12.0**. The application and its instrumentation are the work of the
-[OpenTelemetry Authors](https://github.com/open-telemetry/opentelemetry-demo/tree/1.12.0).
-The upstream [Apache-2.0 license](LICENSE), attribution, and generated Kubernetes
-manifest are preserved. The original project README is available as
-[README.upstream.md](README.upstream.md).
+An AWS deployment project using **OpenTelemetry Astronomy Shop**, a microservices-based e-commerce application. My work focuses on infrastructure provisioning, container delivery, and Kubernetes deployment using Terraform, GitHub Actions, Amazon ECR, and Argo CD.
 
-The author reports completing the original AWS implementation in **January 2025**.
-This repository was **reconstructed for public publication in October 2026**.
-That historical completion date is author-reported; it is not evidence that this
-reconstruction has been deployed or validated on AWS. The infrastructure and
-delivery additions are separate from the inherited application implementation.
+I completed the original AWS implementation in **January 2025**. I recreated the deployment configuration for this public repository in **October 2026**, including updates to authentication, state locking, and application configuration.
 
-## What is included
+## Project Overview
 
-- Terraform for a two-AZ VPC, public/private subnets, EKS managed nodes, frontend
-  ECR repository, and IAM; a separate S3 state-bucket bootstrap root and native
-  S3 state locking configuration.
-- A manually triggered GitHub Actions frontend publisher using AWS OIDC,
-  restricted repository/branch trust, and immutable full commit-SHA image tags.
-- An EKS Kustomize overlay selecting verified 1.12.0 application images and
-  adding the upstream flagd UI wiring while retaining existing third-party images.
-- Scoped Argo CD project/application examples. Delivery requires an operator to
-  publish the frontend, update its GitOps image reference, commit/push that change,
-  and manually sync Argo CD. Automatic sync, pruning, and self-healing are disabled.
+This project brings together the infrastructure and deployment configuration needed to run Astronomy Shop on Amazon EKS.
 
-See [infrastructure setup](docs/infra.md) and [image publishing and delivery](docs/delivery.md)
-for configuration, placeholders, private API access, and the manual handoff.
-Inherited workflows are preserved in [.github/upstream-workflows](.github/upstream-workflows)
-outside GitHub's active workflow directory. Only the manual publisher remains active.
+The application comes from OpenTelemetry. The AWS infrastructure, frontend publishing workflow, EKS overlay, and Argo CD configuration are the focus of this repository.
 
-## Validation and deployment status
+## Infrastructure
 
-Completed checks include Terraform formatting, backend-disabled initialization,
-and validation for both roots; workflow YAML parsing, Bash syntax, trigger and
-permission checks; and verification of official action commit pins. Kustomize
-rendered 74 resources, with checks for images, namespace/RBAC consistency, Argo
-resource allowlists, flagd UI service/volume wiring, and frontend-only ECR replacement.
-Public registry metadata confirmed Linux/AMD64 application-image availability;
-image layers were not pulled. `actionlint` was unavailable.
+- **Terraform:** Configures a VPC across two availability zones, public and private subnets, an EKS managed node group, IAM roles, and a frontend ECR repository.
+- **Remote state:** Includes a separate S3 bucket configuration with versioning, encryption, and native state locking.
+- **Access control:** Uses private EKS API access by default and restricted GitHub OIDC trust for image publishing.
 
-**This reconstruction has not been deployed or runtime-tested.** AWS provisioning,
-remote-state operation, OIDC publishing, ECR pulls, Argo CD synchronization, and
-application behavior remain unverified. Configure the documented placeholders
-before any separately authorized deployment.
+## Image Publishing and Deployment
 
-**Deploying AWS resources incurs charges**, including EKS, worker nodes and disks,
-NAT gateway, public IPv4, S3 state storage/requests, ECR storage, logs, and data transfer.
+The delivery process has four steps:
+
+1. Manually trigger the GitHub Actions workflow to build the frontend image.
+2. Authenticate to AWS through OIDC and publish the image to ECR with a full Git commit-SHA tag.
+3. Update the frontend image reference in the Kubernetes configuration and push the change.
+4. Manually sync the application through Argo CD.
+
+The EKS overlay uses Kustomize to configure the application namespace, application image versions, frontend image replacement, and flagd UI integration. Argo CD examples define the repository source, deployment destination, and allowed resources.
+
+## Repository Structure
+
+| Path | Purpose |
+|---|---|
+| `infra/bootstrap/` | Terraform state-bucket configuration |
+| `infra/terraform/` | AWS infrastructure and publishing permissions |
+| `kubernetes/eks/` | EKS deployment overlay |
+| `argocd/` | Argo CD project and application examples |
+| `.github/workflows/` | Manual frontend publishing workflow |
+| `docs/infra.md` | Infrastructure setup instructions |
+| `docs/delivery.md` | Image publishing and deployment instructions |
+
+## Getting Started
+
+Start with the [infrastructure guide](docs/infra.md), then follow the [delivery guide](docs/delivery.md). Replace the documented configuration placeholders with your own environment settings.
+
+Terraform validation, workflow syntax checks, and Kubernetes manifest rendering have passed. **This published version has not yet been redeployed or runtime-tested on AWS.**
+
+## Application Credit
+
+The application and its instrumentation are provided by the [OpenTelemetry Astronomy Shop project](https://github.com/open-telemetry/opentelemetry-demo/tree/1.12.0).
+
+The upstream [Apache-2.0 license](LICENSE), contributor attribution, and generated Kubernetes manifest are preserved. See [README.upstream.md](README.upstream.md) for the original application documentation.
